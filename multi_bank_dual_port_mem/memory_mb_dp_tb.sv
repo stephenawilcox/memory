@@ -5,7 +5,7 @@ Not for use in commercial or non-commercial products or projects without explici
 `timescale 1ns/1ps
 module memory_mb_dp_tb();
     parameter integer num_bank_entries = 8;
-    parameter integer bit_width = 32;
+    parameter integer data_bit_width = 32;
     parameter integer num_banks = 4;
     parameter integer addr_bit_width = $clog2(num_bank_entries);
 
@@ -18,14 +18,14 @@ module memory_mb_dp_tb();
     reg [num_banks-1:0] rd_en;
     reg [addr_bit_width-1:0] wr_addr [num_banks];
     reg [addr_bit_width-1:0] rd_addr [num_banks];
-    reg [bit_width-1:0] wr_data [num_banks];
-    wire [bit_width-1:0] rd_data [num_banks];
+    reg [data_bit_width-1:0] wr_data [num_banks];
+    wire [data_bit_width-1:0] rd_data [num_banks];
 
     integer i, j;
 
-    reg [bit_width-1:0] data [256];
+    reg [data_bit_width-1:0] data [256];
 
-    memory_mb_dp #(.bit_width(bit_width), .num_banks(num_banks), .num_bank_entries(num_bank_entries)) mem_inst (
+    memory_mb_dp #(.data_bit_width(data_bit_width), .num_banks(num_banks), .num_bank_entries(num_bank_entries)) mem_inst (
         .wr_clk(wr_clk),
         .wr_en(wr_en),
         .wr_addr(wr_addr),
