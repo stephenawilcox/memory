@@ -4,9 +4,9 @@ Not for use in commercial or non-commercial products or projects without explici
 */
 `timescale 1ns/1ps
 module memory_dp_tb();
-    parameter integer num_entries = 8;
+    parameter integer num_mem_entries = 8;
     parameter integer data_bit_width = 32;
-    parameter integer addr_bit_width = $clog2(num_entries);
+    parameter integer addr_bit_width = $clog2(num_mem_entries);
 
     reg clk;
     wire wr_clk, rd_clk;
@@ -22,7 +22,7 @@ module memory_dp_tb();
 
     reg [data_bit_width-1:0] data [256];
 
-    memory_dp #(.num_entries(num_entries), .data_bit_width(data_bit_width)) mem_inst (
+    memory_dp #(.num_mem_entries(num_mem_entries), .data_bit_width(data_bit_width)) mem_inst (
         .wr_clk(wr_clk),
         .wr_en(wr_en),
         .wr_addr(wr_addr),
@@ -55,7 +55,7 @@ module memory_dp_tb();
         // testing writing to memory
         $display("testing writing to memory");
         wr_en = 1;
-        for (i = 0; i < num_entries; i++) begin
+        for (i = 0; i < num_mem_entries; i++) begin
             wr_data = data[i];
             #10;
             wr_addr = wr_addr + 1;
@@ -67,7 +67,7 @@ module memory_dp_tb();
         // testing reading from mem
         $display("testing reading from mem");
         rd_en = 1;
-        for (i = 0; i < num_entries; i++) begin
+        for (i = 0; i < num_mem_entries; i++) begin
             #10;
             if (rd_data != data[i]) begin
                 $display("Error: i: %d, rd_addr: %d, rd_data: %h, data[i]: %h", i, rd_addr, rd_data, data[i]);

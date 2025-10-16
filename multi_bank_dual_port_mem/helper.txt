@@ -1,0 +1,6 @@
+iverilog -g2005-sv -o memory_mb_dp.out memory_dp.sv memory_mb_dp.sv memory_mb_dp_tb.sv
+vvp memory_mb_dp.out
+gtkwave memory_mb_dp.vcd
+
+
+unset GTK_PATH
