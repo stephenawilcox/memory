@@ -1,0 +1,6 @@
+iverilog -g2005-sv -o ecc_encoder.out ecc_encoder.sv ecc_encoder_tb.sv
+vvp ecc_encoder.out
+gtkwave ecc_encoder.vcd
+
+
+unset GTK_PATH
