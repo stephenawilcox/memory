@@ -31,11 +31,11 @@ cur_data = i - $clog2(i) - 1;
 */
 
 
-wire [redundant_bit_width+data_bit_width-1:0] data;
+//wire [redundant_bit_width+data_bit_width-1:0] data;
 genvar i;
 generate
     for (i = 0; i < redundant_bit_width+data_bit_width; i++) begin
-        if (i & (i-1) == 0) begin
+        if ((i & (i-1)) == 0) begin
             if (i == 0) begin
                 assign enc_data_out[i] = parity[0];
             end
@@ -45,7 +45,7 @@ generate
         end
         else begin
             assign enc_data_out[i] = enc_data_in[i - $clog2(i) - 1];
-            assign data[i] = enc_data_in[i - $clog2(i) - 1];
+            //assign data[i] = enc_data_in[i - $clog2(i) - 1];
         end
     end
 endgenerate
@@ -60,12 +60,28 @@ endgenerate
 //         end
 //     end
 // endgenerate
+/*
+j = 1   ->  k[0]    ones bit
+j = 2   ->  k[1]    twos bit
+j = 3   ->  k[2]    fours bit
+j = 4   ->  k[3]    eights bit
+*/
 wire [redundant_bit_width+data_bit_width-1:0] masked_bits [redundant_bit_width];
 genvar j,k;
 generate
     for (j = 1; j < redundant_bit_width; j++) begin
         for (k = 0; k < redundant_bit_width+data_bit_width; k++) begin
-            assign masked_bits[j][k] = k[2**(j-1)] ? data[k] : 1'b0;
+            if(k == 0) begin
+                assign masked_bits[j][k] = 1'b0;
+            end
+            else begin
+                if (k == (1<<(j-1))) begin
+                    assign masked_bits[j][k] = 1'b0;
+                end
+                else begin
+                    assign masked_bits[j][k] = k[j-1] ? enc_data_in[k - $clog2(k) - 1] : 1'b0;
+                end
+            end
         end
     end
 endgenerate
