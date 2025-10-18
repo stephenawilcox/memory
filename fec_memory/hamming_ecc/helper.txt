@@ -15,3 +15,8 @@ gtkwave one_hot_encoder.vcd
 iverilog -g2005-sv -o ecc_decoder.out one_hot_encoder.sv ecc_decoder.sv ecc_decoder_tb.sv
 vvp ecc_decoder.out
 gtkwave ecc_decoder.vcd
+
+
+iverilog -g2005-sv -o ecc_decoder.out one_hot_encoder.sv ecc_decoder.sv ecc_encoder.sv ecc_decoder_tb.sv
+vvp ecc_decoder.out
+gtkwave ecc_decoder.vcd

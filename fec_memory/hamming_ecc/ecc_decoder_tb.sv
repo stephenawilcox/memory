@@ -13,6 +13,12 @@ module ecc_decoder_tb();
     wire [data_bit_width-1:0] data_out;
     reg [data_bit_width-1:0] exp_data_out;
 
+    wire [redundant_bit_width+data_bit_width-1:0] enc_data_out;
+
+    ecc_encoder #(.data_bit_width(data_bit_width), .redundant_bit_width(redundant_bit_width)) enc_inst (
+        .enc_data_in(exp_data_out),
+        .enc_data_out(enc_data_out)
+    );
 
     ecc_decoder #(.data_bit_width(data_bit_width), .redundant_bit_width(redundant_bit_width)) dec_inst (
         .dec_data_in(data_in),
@@ -61,7 +67,8 @@ module ecc_decoder_tb();
         
         for (i = 0; i < redundant_bit_width+data_bit_width; i++) begin
             exp_data_out = {$urandom(), $urandom()};
-            data_in = ecc_encode(exp_data_out);
+            // data_in = ecc_encode(exp_data_out);
+            data_in = enc_data_out;
             data_in[i] = ~data_in[i];
             #10;
             if (data_out != exp_data_out) begin
