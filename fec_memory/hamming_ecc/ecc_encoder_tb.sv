@@ -7,6 +7,8 @@ module ecc_encoder_tb();
     parameter integer data_bit_width = 64;
     parameter integer redundant_bit_width = 8;
 
+    reg clk;
+
     reg [data_bit_width-1:0] data_in;
     wire [redundant_bit_width+data_bit_width-1:0] data_out;
 
@@ -23,7 +25,7 @@ module ecc_encoder_tb();
         clk = 0;
         #20;
         
-
+        
 
         $finish;
     end
