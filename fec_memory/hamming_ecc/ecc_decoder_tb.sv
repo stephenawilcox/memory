@@ -3,22 +3,22 @@ Copyright (c) 2025 Stephen Wilcox. All rights reserved.
 Not for use in commercial or non-commercial products or projects without explicit permission from author.
 */
 `timescale 1ns/1ps
-module ecc_encoder_tb();
+module ecc_decoder_tb();
     parameter integer data_bit_width = 64;
     parameter integer redundant_bit_width = 8;
 
     //reg clk;
 
-    reg [data_bit_width-1:0] data_in;
-    wire [redundant_bit_width+data_bit_width-1:0] data_out;
-    reg [redundant_bit_width+data_bit_width-1:0] exp_data_out;
+    reg [redundant_bit_width+data_bit_width-1:0] data_in;
+    wire [data_bit_width-1:0] data_out;
+    reg [data_bit_width-1:0] exp_data_out;
 
-    ecc_encoder #(.data_bit_width(data_bit_width), .redundant_bit_width(redundant_bit_width)) enc_inst (
-        .enc_data_in(data_in),
-        .enc_data_out(data_out)
+
+    ecc_decoder #(.data_bit_width(data_bit_width), .redundant_bit_width(redundant_bit_width)) dec_inst (
+        .dec_data_in(data_in),
+        .dec_data_out(data_out)
     );
 
-    bit [redundant_bit_width-1:0] func_p;  // to see in the waveform
     function automatic bit [redundant_bit_width+data_bit_width-1:0] ecc_encode(input bit [data_bit_width-1:0] data);
         bit [redundant_bit_width+data_bit_width-1:0] output_data = '0;
         bit [redundant_bit_width-1:0] p;
@@ -26,9 +26,6 @@ module ecc_encoder_tb();
         for (j = 1; j < redundant_bit_width; j++) begin
             for (k = 0; k < redundant_bit_width+data_bit_width; k++) begin
                 if (k != 0) begin
-                    // if (k & (1 << (j-1))) begin
-                    //     p[j] ^= data[k - $clog2(k) - 1];
-                    // end
                     if (k[j-1]) begin
                         p[j] ^= data[k - $clog2(k) - 1];
                     end
@@ -36,7 +33,6 @@ module ecc_encoder_tb();
             end
         end
         p[0] = ^{data, p[redundant_bit_width-1:1]};
-        func_p = p;
         for (j = 0; j < redundant_bit_width+data_bit_width; j++) begin
             if (j == 0) begin
                     output_data[j] = p[0];
@@ -51,24 +47,25 @@ module ecc_encoder_tb();
         return output_data;
     endfunction
 
-    integer i;
-
+    integer i, j;
     initial begin
-        $dumpfile("ecc_encoder.vcd");
-        $dumpvars(0, ecc_encoder_tb);
-        for (int j = 0; j < redundant_bit_width; j++) begin
-            $dumpvars(0, ecc_encoder_tb.enc_inst.masked_bits[j]);
+        $dumpfile("ecc_decoder.vcd");
+        $dumpvars(0, ecc_decoder_tb);
+        for (j = 0; j < redundant_bit_width; j++) begin
+            $dumpvars(0, ecc_decoder_tb.dec_inst.masked_bits[j]);
         end
+
 
         //clk = 0;
         #20;
         
-        for (i = 0; i < 10; i++) begin
-            data_in = {$urandom, $urandom};
-            exp_data_out = ecc_encode(data_in);
+        for (i = 0; i < redundant_bit_width+data_bit_width; i++) begin
+            exp_data_out = {$urandom(), $urandom()};
+            data_in = ecc_encode(exp_data_out);
+            data_in[i] = ~data_in[i];
             #10;
             if (data_out != exp_data_out) begin
-                $display("Error: data_out: %h, exp_data_out: %h", data_out, exp_data_out);
+                $display("Error: i: %d, data_out: %h, exp_data_out: %h", i, data_out, exp_data_out);
             end
             #10;
         end

@@ -4,3 +4,14 @@ gtkwave ecc_encoder.vcd
 
 
 unset GTK_PATH
+
+
+
+iverilog -g2005-sv -o one_hot_encoder.out one_hot_encoder.sv one_hot_encoder_tb.sv
+vvp one_hot_encoder.out
+gtkwave one_hot_encoder.vcd
+
+
+iverilog -g2005-sv -o ecc_decoder.out one_hot_encoder.sv ecc_decoder.sv ecc_decoder_tb.sv
+vvp ecc_decoder.out
+gtkwave ecc_decoder.vcd

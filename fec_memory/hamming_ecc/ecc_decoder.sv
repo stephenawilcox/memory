@@ -2,13 +2,14 @@
 Copyright (c) 2025 Stephen Wilcox. All rights reserved.
 Not for use in commercial or non-commercial products or projects without explicit permission from author.
 */
-module ecc_encoder #(
+module ecc_decoder #(
     parameter integer data_bit_width = 64,
     parameter integer redundant_bit_width = 8
 )
 (
-    input wire [data_bit_width-1:0] enc_data_in,
-    output wire [redundant_bit_width+data_bit_width-1:0] enc_data_out
+    input wire [redundant_bit_width+data_bit_width-1:0] dec_data_in,
+    output wire [data_bit_width-1:0] dec_data_out,
+    output wire [1:0] err
 );
 // single error correction, double error detection hamming code
 /*
@@ -30,13 +31,24 @@ i = 18  -> cur_data = 12    i-6     $clog2(i)=5
 cur_data = i - $clog2(i) - 1;
 */
 
-/*
-j = 1   ->  k[0]    ones bit
-j = 2   ->  k[1]    twos bit
-j = 3   ->  k[2]    fours bit
-j = 4   ->  k[3]    eights bit
-*/
-wire [data_bit_width-1:0] masked_bits [redundant_bit_width];
+wire [redundant_bit_width-1:0] parity_r;
+genvar i;
+generate
+    for (i = 0; i < redundant_bit_width+data_bit_width; i++) begin
+        if ((i & (i-1)) == 0) begin
+            if (i == 0) begin
+                assign parity_r[0] = dec_data_in[0];
+            end
+            else begin
+                assign parity_r[$clog2(i) + 1] = dec_data_in[i];
+            end
+        end
+    end
+endgenerate
+
+
+wire [redundant_bit_width-1:0] parity_e;
+wire [redundant_bit_width+data_bit_width-1:0] masked_bits [redundant_bit_width];
 genvar j,k;
 generate
     for (j = 1; j < redundant_bit_width; j++) begin
@@ -49,7 +61,7 @@ generate
                     assign masked_bits[j][k - $clog2(k) - 1] = 1'b0;
                 end
                 else begin
-                    assign masked_bits[j][k - $clog2(k) - 1] = k[j-1] ? enc_data_in[k - $clog2(k) - 1] : 1'b0;
+                    assign masked_bits[j][k] = k[j-1] ? dec_data_in[k] : 1'b0;
                 end
             end
         end
@@ -57,26 +69,34 @@ generate
 endgenerate
 
 
-wire [redundant_bit_width-1:0] parity;
+wire [redundant_bit_width-1:0] discepancy;
 genvar n;
 generate
     for (n = 1; n < redundant_bit_width; n++) begin
-        assign parity[n] = ^masked_bits[n];
+        assign parity_e[n] = ^masked_bits[n];
     end
 endgenerate
-assign parity[0] = ^{enc_data_in, parity[redundant_bit_width-1:1]};
+assign parity_e[0] = ^{dec_data_in[redundant_bit_width+data_bit_width-1:1]};
+assign discepancy = parity_e ^ parity_r;
 
 
-genvar i;
+wire [redundant_bit_width+data_bit_width-1:0] oh_out;
+one_hot_encoder #(.in_bit_width(redundant_bit_width-1), .out_bit_width(redundant_bit_width+data_bit_width)) oh_enc_inst (
+    .oh_in(discepancy[redundant_bit_width-1:1]),
+    .oh_out(oh_out)
+);
+// genvar i;
 generate
-    for (i = 0; i < redundant_bit_width+data_bit_width; i++) begin
-        if ((i & (i-1)) == 0) begin
-            assign enc_data_out[i] = parity[$clog2(i)+1];
+    for (i = 0; i < data_bit_width; i++) begin
+        if (i == 0) begin
+            assign dec_data_out[i] = oh_out[i] ^ dec_data_in[3];
         end
         else begin
-            assign enc_data_out[i] = enc_data_in[i - $clog2(i) - 1];
+            assign dec_data_out[i] = oh_out[i] ^ dec_data_in[i + $clog2(i) + 1];
         end
     end
 endgenerate
+assign err[0] = 0;//FIXME
+assign err[1] = 0;
 
 endmodule
